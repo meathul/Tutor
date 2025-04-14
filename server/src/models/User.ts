@@ -1,22 +1,75 @@
-import mongoose from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+
+interface IUser extends Document {
+  learningProgress: {
+    slidesCompleted: string[];
+    notebooksCompleted: string[];
+    questionsAttempted: number;
+    lastAccessDate?: Date;
+  };
+  materials: {
+    slideSets: Array<{
+      name: string;
+      totalSlides: number;
+      currentSlide: number;
+    }>;
+    notebooks: Array<{
+      name: string;
+      completed: boolean;
+      lastAccessed: Date;
+    }>;
+    questionPapers: Array<{
+      year: number;
+      solved: boolean;
+      score?: number;
+      attempts: number;
+    }>;
+  };
+  performance: Array<{
+    materialId: string;
+    materialType: 'slide' | 'notebook' | 'questionPaper';
+    score?: number;
+    timeSpent: number;
+    completedAt: Date;
+  }>;
+}
 
 const userSchema = new mongoose.Schema({
-  progress: {
-    completedQuizzes: { type: Number, default: 0 },
-    averageScore: { type: Number, default: 0 },
-    studyStreak: { type: Number, default: 0 },
-    lastStudyDate: { type: Date },
+  learningProgress: {
+    slidesCompleted: { type: [String], default: [] },
+    notebooksCompleted: { type: [String], default: [] },
+    questionsAttempted: { type: Number, default: 0 },
+    lastAccessDate: { type: Date, default: Date.now },
   },
-  studyPlan: {
-    topics: [String],
-    currentLevel: { type: String, default: 'beginner' },
-    weeklyGoals: [String],
+  materials: {
+    slideSets: [{
+      name: { type: String, required: true },
+      totalSlides: { type: Number, required: true },
+      currentSlide: { type: Number, default: 0 },
+    }],
+    notebooks: [{
+      name: { type: String, required: true },
+      completed: { type: Boolean, default: false },
+      lastAccessed: { type: Date, default: Date.now },
+    }],
+    questionPapers: [{
+      year: { type: Number, required: true },
+      solved: { type: Boolean, default: false },
+      score: Number,
+      attempts: { type: Number, default: 0 },
+    }]
   },
-  quizHistory: [{
-    quizId: String,
+  performance: [{
+    materialId: { type: String, required: true },
+    materialType: { 
+      type: String,
+      required: true,
+      enum: ['slide', 'notebook', 'questionPaper']
+    },
     score: Number,
-    completedAt: Date,
-  }],
+    timeSpent: { type: Number, default: 0 }, // in minutes
+    completedAt: { type: Date, default: Date.now },
+  }]
 }, { timestamps: true });
 
-export const User = mongoose.model('User', userSchema);
+export const User = mongoose.model<IUser>('User', userSchema);
